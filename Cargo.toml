@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 num_enum = "*"
 nom = "5"
+pad = "*"
+hex = "*"

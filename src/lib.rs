@@ -1,4 +1,5 @@
 extern crate num_enum;
+extern crate pad;
 
 #[macro_use]
 extern crate nom;
@@ -8,6 +9,8 @@ use nom::number::complete::le_u8;
 use nom::IResult;
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
+
+pub mod sgtin;
 
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
@@ -38,12 +41,9 @@ pub enum EPCBinaryHeader {
     ITIP212 = 0x41,
 }
 
-#[derive(PartialEq, Debug)]
-pub struct SGTIN96 {
-    pub filter: u8,
-    pub company: u64,
-    pub item: u64,
-    pub serial: u64,
+pub trait EPC {
+    fn to_uri(&self) -> String;
+    fn to_tag_uri(&self) -> String;
 }
 
 #[derive(PartialEq, Debug)]
@@ -51,75 +51,35 @@ pub struct Unprogrammed {
     pub data: Vec<u8>,
 }
 
+impl EPC for Unprogrammed {
+    fn to_uri(&self) -> String {
+        format!("urn:epc:id:unprogrammed")
+    }
+
+    fn to_tag_uri(&self) -> String {
+        format!("urn:epc:tag:unprogrammed")
+    }
+}
+
 #[derive(PartialEq, Debug)]
-pub enum EPC {
+pub enum EPCValue {
     Unprogrammed(Unprogrammed),
-    SGTIN96(SGTIN96),
+    SGTIN96(sgtin::SGTIN96),
 }
 
 fn take_header(data: &[u8]) -> IResult<&[u8], EPCBinaryHeader> {
     map_res(le_u8, EPCBinaryHeader::try_from)(data)
 }
 
-fn decode_sgtin96(data: &[u8]) -> IResult<&[u8], EPC> {
-    // EPC Table 14-2 and 14-3
-    let (data, (filter, (company, item), serial)): (&[u8], (u8, (u64, u64), u64)) = try_parse!(
-        data,
-        bits!(tuple!(
-            take_bits!(3usize),
-            switch!(take_bits!(3usize),
-                0 => tuple!(
-                    take_bits!(40usize),
-                    take_bits!(4usize)
-                )
-                | 1 => tuple!(
-                    take_bits!(37usize),
-                    take_bits!(7usize)
-                )
-                | 2 => tuple!(
-                    take_bits!(34usize),
-                    take_bits!(10usize)
-                )
-                | 3 => tuple!(
-                    take_bits!(30usize),
-                    take_bits!(14usize)
-                )
-                | 4 => tuple!(
-                    take_bits!(27usize),
-                    take_bits!(17usize)
-                )
-                | 5 => tuple!(
-                    take_bits!(24usize),
-                    take_bits!(20usize)
-                )
-                | 6 => tuple!(
-                    take_bits!(20usize),
-                    take_bits!(24usize)
-                )
-            ),
-            take_bits!(38usize)
-        ))
-    );
 
-    Ok((
-        data,
-        EPC::SGTIN96(SGTIN96 {
-            filter: filter,
-            company: company,
-            item: item,
-            serial: serial,
-        }),
-    ))
-}
-
-pub fn decode(data: &[u8]) -> IResult<&[u8], EPC> {
+fn decode(data: &[u8]) -> IResult<&[u8], EPCValue> {
     let (data, header) = take_header(data)?;
 
     let (data, epc) = match header {
-        EPCBinaryHeader::SGITN96 => decode_sgtin96(data)?,
+        EPCBinaryHeader::SGITN96 => sgtin::decode_sgtin96(data)?,
         EPCBinaryHeader::Unprogrammed => (
             &[] as &[u8],
-            EPC::Unprogrammed(Unprogrammed {
+            EPCValue::Unprogrammed(Unprogrammed {
                 data: data.to_vec(),
             }),
         ),
@@ -131,19 +91,17 @@ pub fn decode(data: &[u8]) -> IResult<&[u8], EPC> {
     Ok((data, epc))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_decode() {
-        let data = [48, 57, 96, 98, 195, 161, 168, 0, 0, 107, 51, 244];
-        println!("{:?}", decode(&data));
-
-        let data = [0, 176, 122, 20, 12, 95, 156, 81, 64, 0, 3, 238];
-        println!("{:?}", decode(&data));
-
-        let data = [226, 0, 0, 25, 6, 12, 2, 9, 6, 144, 211, 194];
-        println!("{:?}", decode(&data));
+pub fn decode_binary(data: &[u8]) -> Result<EPCValue, String> {
+    match decode(data) {
+        Ok((_data, epc)) => Ok(epc),
+        Err(error) => Err(format!("Unable to parse binary EPC: {:?}", error))
     }
+}
+
+pub fn decode_binary_box(data: &[u8]) -> Result<Box<dyn EPC>, String> {
+    let val: Box<dyn EPC> = match decode_binary(data)? {
+        EPCValue::SGTIN96(val) => Box::new(val),
+        EPCValue::Unprogrammed(val) => Box::new(val)
+    };
+    Ok(val)
 }
