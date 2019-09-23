@@ -11,6 +11,7 @@ use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 
 pub mod sgtin;
+pub mod gs1;
 
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
@@ -45,6 +46,10 @@ pub trait EPC {
     fn to_uri(&self) -> String;
     fn to_tag_uri(&self) -> String;
     fn get_value(&self) -> EPCValue;
+}
+
+pub trait GS1 {
+    fn to_gs1(&self) -> String;
 }
 
 #[derive(PartialEq, Debug)]

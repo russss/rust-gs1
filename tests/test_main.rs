@@ -1,4 +1,4 @@
-use epc::{decode_binary, EPCValue};
+use epc::{decode_binary, EPCValue, GS1};
 use hex;
 
 
@@ -6,7 +6,7 @@ use hex;
 fn test_decode() {
     let data = [48, 57, 96, 98, 195, 161, 168, 0, 0, 107, 51, 244];
     let result = decode_binary(&data).unwrap();
-    assert_eq!(result.to_uri(), "urn:epc:id:sgtin:360843.951968.7025652");
+    assert_eq!(result.to_uri(), "urn:epc:id:sgtin:360843.0951968.7025652");
 
     let val = match result.get_value() {
         EPCValue::SGTIN96(a) => a,
@@ -15,6 +15,7 @@ fn test_decode() {
 
     assert_eq!(val.company, 360843);
     assert_eq!(val.item, 951968);
+    assert_eq!(val.to_gs1(), "(01) 03608439519680 (21) 7025652");
 
     let data = [0, 176, 122, 20, 12, 95, 156, 81, 64, 0, 3, 238];
     let result = decode_binary(&data).unwrap();
@@ -37,6 +38,12 @@ fn test_examples() {
     let data = decode_binary(&hex::decode("3074257BF7194E4000001A85").unwrap()).unwrap();
     assert_eq!(data.to_uri(), "urn:epc:id:sgtin:0614141.812345.6789");
     assert_eq!(data.to_tag_uri(), "urn:epc:tag:sgtin-96:3.0614141.812345.6789");
+
+    let data = match data.get_value() {
+        EPCValue::SGTIN96(val) => val,
+        _ => { panic!("Invalid type") }
+    };
+    assert_eq!(data.to_gs1(), "(01) 80614141123458 (21) 6789");
 
 
     // SGTIN-198
