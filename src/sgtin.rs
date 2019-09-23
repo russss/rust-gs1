@@ -1,4 +1,4 @@
-use crate::{EPCValue, EPC};
+use crate::{EPC, EPCValue};
 use nom::IResult;
 use pad::{Alignment, PadStr};
 
@@ -41,6 +41,10 @@ impl EPC for SGTIN96 {
             self.serial
         )
     }
+
+    fn get_value(&self) -> EPCValue {
+        EPCValue::SGTIN96(self)
+    }
 }
 
 #[derive(PartialEq, Debug)]
@@ -59,7 +63,7 @@ fn sgtin_company_digits(partition: u8) -> usize {
     12 - partition as usize
 }
 
-pub(super) fn decode_sgtin96(data: &[u8]) -> IResult<&[u8], EPCValue> {
+pub(super) fn decode_sgtin96(data: &[u8]) -> IResult<&[u8], Box<dyn EPC>> {
     // EPC Table 14-2 and 14-3
     let (data, (filter, (partition, company, item), serial)): (&[u8], (u8, (u8, u64, u64), u64)) = try_parse!(
         data,
@@ -108,7 +112,7 @@ pub(super) fn decode_sgtin96(data: &[u8]) -> IResult<&[u8], EPCValue> {
 
     Ok((
         data,
-        EPCValue::SGTIN96(SGTIN96 {
+        Box::new(SGTIN96 {
             filter: filter,
             partition: partition,
             company: company,

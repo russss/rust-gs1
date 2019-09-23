@@ -13,7 +13,7 @@ use std::convert::TryFrom;
 pub mod sgtin;
 
 // EPC Table 14-1
-#[derive(Debug, Eq, PartialEq, TryFromPrimitive)]
+#[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
 #[repr(u8)]
 pub enum EPCBinaryHeader {
     Unprogrammed = 0x00,
@@ -44,6 +44,7 @@ pub enum EPCBinaryHeader {
 pub trait EPC {
     fn to_uri(&self) -> String;
     fn to_tag_uri(&self) -> String;
+    fn get_value(&self) -> EPCValue;
 }
 
 #[derive(PartialEq, Debug)]
@@ -59,12 +60,16 @@ impl EPC for Unprogrammed {
     fn to_tag_uri(&self) -> String {
         format!("urn:epc:tag:unprogrammed")
     }
+
+    fn get_value(&self) -> EPCValue {
+        EPCValue::Unprogrammed(self)
+    }
 }
 
 #[derive(PartialEq, Debug)]
-pub enum EPCValue {
-    Unprogrammed(Unprogrammed),
-    SGTIN96(sgtin::SGTIN96),
+pub enum EPCValue<'a> {
+    Unprogrammed(&'a Unprogrammed),
+    SGTIN96(&'a sgtin::SGTIN96),
 }
 
 fn take_header(data: &[u8]) -> IResult<&[u8], EPCBinaryHeader> {
@@ -72,16 +77,16 @@ fn take_header(data: &[u8]) -> IResult<&[u8], EPCBinaryHeader> {
 }
 
 
-fn decode(data: &[u8]) -> IResult<&[u8], EPCValue> {
+fn decode(data: &[u8]) -> IResult<&[u8], Box<dyn EPC>> {
     let (data, header) = take_header(data)?;
 
     let (data, epc) = match header {
         EPCBinaryHeader::SGITN96 => sgtin::decode_sgtin96(data)?,
         EPCBinaryHeader::Unprogrammed => (
             &[] as &[u8],
-            EPCValue::Unprogrammed(Unprogrammed {
+            Box::new(Unprogrammed {
                 data: data.to_vec(),
-            }),
+            }) as Box<dyn EPC>,
         ),
         unimplemented => {
             panic!("Unimplemented EPC type {:?}", unimplemented);
@@ -91,17 +96,9 @@ fn decode(data: &[u8]) -> IResult<&[u8], EPCValue> {
     Ok((data, epc))
 }
 
-pub fn decode_binary(data: &[u8]) -> Result<EPCValue, String> {
+pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>, String> {
     match decode(data) {
         Ok((_data, epc)) => Ok(epc),
         Err(error) => Err(format!("Unable to parse binary EPC: {:?}", error))
     }
-}
-
-pub fn decode_binary_box(data: &[u8]) -> Result<Box<dyn EPC>, String> {
-    let val: Box<dyn EPC> = match decode_binary(data)? {
-        EPCValue::SGTIN96(val) => Box::new(val),
-        EPCValue::Unprogrammed(val) => Box::new(val)
-    };
-    Ok(val)
 }
