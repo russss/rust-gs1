@@ -47,9 +47,7 @@ fn test_examples() {
 
 
     // SGTIN-198
-    /*
-    let data = decode_binary_box(&hex::decode("3674257BF6B7A659B2C2BF100000000000000000000000000000").unwrap()).unwrap();
+    let data = decode_binary(&hex::decode("3674257BF6B7A659B2C2BF100000000000000000000000000000").unwrap()).unwrap();
     assert_eq!(data.to_uri(), "urn:epc:id:sgtin:0614141.712345.32a%2Fb");
     assert_eq!(data.to_tag_uri(), "urn:epc:tag:sgtin-198:3.0614141.712345.32a%2Fb");
-    */
 }

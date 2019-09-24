@@ -4,6 +4,7 @@ use std::convert::TryFrom;
 
 pub mod sgtin;
 pub mod tid;
+mod util;
 
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
@@ -67,6 +68,7 @@ impl EPC for Unprogrammed {
 pub enum EPCValue<'a> {
     Unprogrammed(&'a Unprogrammed),
     SGTIN96(&'a sgtin::SGTIN96),
+    SGTIN198(&'a sgtin::SGTIN198),
 }
 
 fn take_header(data: &[u8]) -> Result<(&[u8], EPCBinaryHeader)> {
@@ -79,6 +81,7 @@ pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>> {
 
     let epc = match header {
         EPCBinaryHeader::SGITN96 => sgtin::decode_sgtin96(data)?,
+        EPCBinaryHeader::SGITN198 => sgtin::decode_sgtin198(data)?,
         EPCBinaryHeader::Unprogrammed => 
             Box::new(Unprogrammed {
                 data: data.to_vec(),

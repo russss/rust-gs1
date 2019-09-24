@@ -7,6 +7,6 @@ edition = "2018"
 [dependencies]
 num_enum = "*"
 bitreader = "*"
-nom = "5"
+percent-encoding = "*"
 pad = "*"
 hex = "*"
