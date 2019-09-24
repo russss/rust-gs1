@@ -1,7 +1,8 @@
 //! Serialised Global Trade Item Number
 use crate::checksum::gs1_checksum;
 use crate::epc::util::{extract_indicator, read_string, uri_encode, zero_pad};
-use crate::epc::{EPCValue, EPC, GS1};
+use crate::epc::{EPCValue, EPC};
+use crate::GS1;
 use crate::error::Result;
 use crate::general::ApplicationIdentifier;
 use bitreader::BitReader;

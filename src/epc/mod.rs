@@ -16,7 +16,7 @@ mod util;
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
 #[repr(u8)]
-pub enum EPCBinaryHeader {
+enum EPCBinaryHeader {
     Unprogrammed = 0x00,
     GTDI96 = 0x2C,
     GSRN96 = 0x2D,
@@ -45,19 +45,18 @@ pub enum EPCBinaryHeader {
 /// A GS1 object which is capable of being represented as an EPC.
 pub trait EPC {
     /// Return the EPC pure identity URI for this object.
+    ///
+    /// Example: `urn:epc:id:sgtin:0614141.812345.6789`
     fn to_uri(&self) -> String;
     /// Return the EPC tag URI for this object.
     ///
-    /// This URI includes tag-specific data.
+    /// This URI includes all data from the pure URI, plus tag-specific data which does not form
+    /// part of the identifier.
+    ///
+    /// Example: `urn:epc:tag:sgtin-96:3.0614141.812345.6789`
     fn to_tag_uri(&self) -> String;
     /// Return the underlying EPC structure in an `EPCValue` tagged enum.
     fn get_value(&self) -> EPCValue;
-}
-
-/// A GS1 object which is capable of being represented as a GS1 code (i.e. a barcode).
-pub trait GS1 {
-    /// Return the GS1 code string for this object.
-    fn to_gs1(&self) -> String;
 }
 
 #[derive(PartialEq, Debug)]
@@ -79,6 +78,7 @@ impl EPC for Unprogrammed {
     }
 }
 
+/// A tagged union to allow data structures to be returned from the EPC trait
 #[derive(PartialEq, Debug)]
 pub enum EPCValue<'a> {
     Unprogrammed(&'a Unprogrammed),
