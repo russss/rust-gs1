@@ -1,3 +1,8 @@
+//! GS1 Electronic Product Codes
+//!
+//! EPCs are used to represent GS1 IDs on Gen2 RFID tags.
+//! This is documented in the [GS1 EPC Tag Data Standard](https://www.gs1.org/standards/epc-rfid/tds).
+//!
 use crate::error::Result;
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
@@ -6,6 +11,7 @@ pub mod sgtin;
 pub mod sscc;
 pub mod tid;
 mod util;
+
 
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
@@ -36,13 +42,21 @@ pub enum EPCBinaryHeader {
     ITIP212 = 0x41,
 }
 
+/// A GS1 object which is capable of being represented as an EPC.
 pub trait EPC {
+    /// Return the EPC pure identity URI for this object.
     fn to_uri(&self) -> String;
+    /// Return the EPC tag URI for this object.
+    ///
+    /// This URI includes tag-specific data.
     fn to_tag_uri(&self) -> String;
+    /// Return the underlying EPC structure in an `EPCValue` tagged enum.
     fn get_value(&self) -> EPCValue;
 }
 
+/// A GS1 object which is capable of being represented as a GS1 code (i.e. a barcode).
 pub trait GS1 {
+    /// Return the GS1 code string for this object.
     fn to_gs1(&self) -> String;
 }
 
@@ -78,10 +92,11 @@ fn take_header(data: &[u8]) -> Result<(&[u8], EPCBinaryHeader)> {
     Ok((&data[1..], header))
 }
 
+/// Decode a binary EPC code, as received from an RFID tag.
 pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>> {
     let (data, header) = take_header(data)?;
 
-    let epc = match header {
+    Ok(match header {
         EPCBinaryHeader::SGITN96 => sgtin::decode_sgtin96(data)?,
         EPCBinaryHeader::SGITN198 => sgtin::decode_sgtin198(data)?,
         EPCBinaryHeader::SSCC96 => sscc::decode_sscc96(data)?,
@@ -92,7 +107,5 @@ pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>> {
         unimplemented => {
             panic!("Unimplemented EPC type {:?}", unimplemented);
         }
-    };
-
-    Ok(epc)
+    })
 }

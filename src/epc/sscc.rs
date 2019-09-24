@@ -1,3 +1,4 @@
+//! Serial Shipping Container Code
 use crate::checksum::gs1_checksum;
 use crate::epc::util::{extract_indicator, zero_pad};
 use crate::epc::{EPCValue, EPC, GS1};

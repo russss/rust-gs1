@@ -1,3 +1,7 @@
+//! Decoder for EPC Tag Identification
+//!
+//! # Reference
+//! GS1 EPC TDS Section 16
 use bitreader::{BitReader, BitReaderError};
 
 #[derive(PartialEq, Debug)]

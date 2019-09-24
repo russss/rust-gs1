@@ -1,3 +1,4 @@
+//! Serialised Global Trade Item Number
 use crate::checksum::gs1_checksum;
 use crate::epc::util::{extract_indicator, read_string, uri_encode, zero_pad};
 use crate::epc::{EPCValue, EPC, GS1};
@@ -5,13 +6,20 @@ use crate::error::Result;
 use crate::general::ApplicationIdentifier;
 use bitreader::BitReader;
 
+/// 96-bit SGTIN
 #[derive(PartialEq, Debug)]
 pub struct SGTIN96 {
+    /// Filter value to allow RFID readers to select the type of tag to read.
     pub filter: u8,
+    /// Partition value: defines the size of the company and item fields
     pub partition: u8,
+    /// Indicator digit
     pub indicator: u8,
+    /// Company identifier
     pub company: u64,
+    /// Item identifier (product code)
     pub item: u64,
+    /// Item serial number
     pub serial: u64,
 }
 
@@ -62,8 +70,10 @@ impl GS1 for SGTIN96 {
     }
 }
 
+/// 198-bit SGTIN
 #[derive(PartialEq, Debug)]
 pub struct SGTIN198 {
+    /// Filter value defined by the manufacturer to allow RFID readers to select tags to read
     pub filter: u8,
     pub partition: u8,
     pub indicator: u8,
