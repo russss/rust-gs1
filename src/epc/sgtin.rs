@@ -1,5 +1,5 @@
 use crate::checksum::gs1_checksum;
-use crate::epc::util::{read_string, uri_encode, zero_pad};
+use crate::epc::util::{extract_indicator, read_string, uri_encode, zero_pad};
 use crate::epc::{EPCValue, EPC, GS1};
 use crate::error::Result;
 use crate::general::ApplicationIdentifier;
@@ -20,12 +20,9 @@ impl EPC for SGTIN96 {
     fn to_uri(&self) -> String {
         format!(
             "urn:epc:id:sgtin:{}.{}{}.{}",
-            zero_pad(
-                self.company.to_string(),
-                sgtin_company_digits(self.partition)
-            ),
+            zero_pad(self.company.to_string(), company_digits(self.partition)),
             self.indicator.to_string(),
-            zero_pad(self.item.to_string(), sgtin_item_digits(self.partition) - 1),
+            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
             self.serial
         )
     }
@@ -34,12 +31,9 @@ impl EPC for SGTIN96 {
         format!(
             "urn:epc:tag:sgtin-96:{}.{}.{}{}.{}",
             self.filter,
-            zero_pad(
-                self.company.to_string(),
-                sgtin_company_digits(self.partition)
-            ),
+            zero_pad(self.company.to_string(), company_digits(self.partition)),
             self.indicator.to_string(),
-            zero_pad(self.item.to_string(), sgtin_item_digits(self.partition) - 1),
+            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
             self.serial
         )
     }
@@ -54,11 +48,8 @@ impl GS1 for SGTIN96 {
         let element_string = format!(
             "{}{}{}",
             self.indicator,
-            zero_pad(
-                self.company.to_string(),
-                sgtin_company_digits(self.partition)
-            ),
-            zero_pad(self.item.to_string(), sgtin_item_digits(self.partition) - 1)
+            zero_pad(self.company.to_string(), company_digits(self.partition)),
+            zero_pad(self.item.to_string(), item_digits(self.partition) - 1)
         );
         format!(
             "({:0>2}) {}{} ({:0>2}) {}",
@@ -86,12 +77,9 @@ impl EPC for SGTIN198 {
     fn to_uri(&self) -> String {
         format!(
             "urn:epc:id:sgtin:{}.{}{}.{}",
-            zero_pad(
-                self.company.to_string(),
-                sgtin_company_digits(self.partition)
-            ),
-            self.indicator.to_string(),
-            zero_pad(self.item.to_string(), sgtin_item_digits(self.partition) - 1),
+            zero_pad(self.company.to_string(), company_digits(self.partition)),
+            self.indicator,
+            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
             uri_encode(self.serial.to_string())
         )
     }
@@ -100,12 +88,9 @@ impl EPC for SGTIN198 {
         format!(
             "urn:epc:tag:sgtin-198:{}.{}.{}{}.{}",
             self.filter,
-            zero_pad(
-                self.company.to_string(),
-                sgtin_company_digits(self.partition)
-            ),
-            self.indicator.to_string(),
-            zero_pad(self.item.to_string(), sgtin_item_digits(self.partition) - 1),
+            zero_pad(self.company.to_string(), company_digits(self.partition)),
+            self.indicator,
+            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
             uri_encode(self.serial.to_string())
         )
     }
@@ -120,11 +105,8 @@ impl GS1 for SGTIN198 {
         let element_string = format!(
             "{}{}{}",
             self.indicator,
-            zero_pad(
-                self.company.to_string(),
-                sgtin_company_digits(self.partition)
-            ),
-            zero_pad(self.item.to_string(), sgtin_item_digits(self.partition) - 1)
+            zero_pad(self.company.to_string(), company_digits(self.partition)),
+            zero_pad(self.item.to_string(), item_digits(self.partition) - 1)
         );
         format!(
             "({:0>2}) {}{} ({:0>2}) {}",
@@ -140,12 +122,12 @@ impl GS1 for SGTIN198 {
 // Calculate the number of digits in the decimal representation of a SGTIN
 // company code from the partition ID.
 // GS1 EPC TDS Table 14-2
-fn sgtin_company_digits(partition: u8) -> usize {
+fn company_digits(partition: u8) -> usize {
     12 - partition as usize
 }
 
-fn sgtin_item_digits(partition: u8) -> usize {
-    13 - sgtin_company_digits(partition)
+fn item_digits(partition: u8) -> usize {
+    13 - company_digits(partition)
 }
 
 // GS1 EPC TDS Table 14-2
@@ -166,20 +148,6 @@ fn partition_bits(partition: u8) -> Result<(u8, u8)> {
     })
 }
 
-fn extract_indicator(item: u64, partition: u8) -> Result<(u64, u8)> {
-    // The first character of the correctly-padded item string is the indicator digit or must be
-    // zero. I think.
-    // This is not terribly well spelled out in the GS1 EPC spec.
-    //
-    // TODO: error handling could be improved, but in practice most of these errors are probably
-    // unreachable.
-    let item_str = zero_pad(item.to_string(), sgtin_item_digits(partition));
-    let mut item_str_iterator = item_str.chars();
-    let indicator = item_str_iterator.next().unwrap().to_digit(10).unwrap() as u8;
-    let item = item_str_iterator.collect::<String>().parse::<u64>()?;
-    return Ok((item, indicator));
-}
-
 // GS1 EPC TDC Section 14.5.1
 pub(super) fn decode_sgtin96(data: &[u8]) -> Result<Box<dyn EPC>> {
     let mut reader = BitReader::new(data);
@@ -189,7 +157,7 @@ pub(super) fn decode_sgtin96(data: &[u8]) -> Result<Box<dyn EPC>> {
     let (company_bits, item_bits) = partition_bits(partition)?;
     let company = reader.read_u64(company_bits)?;
     let item = reader.read_u64(item_bits)?;
-    let (item, indicator) = extract_indicator(item, partition)?;
+    let (item, indicator) = extract_indicator(item, item_digits(partition))?;
     let serial = reader.read_u64(38)?;
 
     Ok(Box::new(SGTIN96 {
@@ -211,7 +179,7 @@ pub(super) fn decode_sgtin198(data: &[u8]) -> Result<Box<dyn EPC>> {
     let (company_bits, item_bits) = partition_bits(partition)?;
     let company = reader.read_u64(company_bits)?;
     let item = reader.read_u64(item_bits)?;
-    let (item, indicator) = extract_indicator(item, partition)?;
+    let (item, indicator) = extract_indicator(item, item_digits(partition))?;
     let serial = read_string(reader, 140)?;
 
     Ok(Box::new(SGTIN198 {

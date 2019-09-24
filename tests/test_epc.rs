@@ -50,4 +50,21 @@ fn test_examples() {
     let data = decode_binary(&hex::decode("3674257BF6B7A659B2C2BF100000000000000000000000000000").unwrap()).unwrap();
     assert_eq!(data.to_uri(), "urn:epc:id:sgtin:0614141.712345.32a%2Fb");
     assert_eq!(data.to_tag_uri(), "urn:epc:tag:sgtin-198:3.0614141.712345.32a%2Fb");
+
+    let data = match data.get_value() {
+        EPCValue::SGTIN198(val) => val,
+        _ => { panic!("Invalid type") }
+    };
+    assert_eq!(data.to_gs1(), "(01) 70614141123451 (21) 32a/b");
+
+    // SSCC-96
+    let data = decode_binary(&hex::decode("3174257BF4499602D2000000").unwrap()).unwrap();
+    assert_eq!(data.to_uri(), "urn:epc:id:sscc:0614141.1234567890");
+    assert_eq!(data.to_tag_uri(), "urn:epc:tag:sscc-96:3.0614141.1234567890");
+
+    let data = match data.get_value() {
+        EPCValue::SSCC96(val) => val,
+        _ => { panic!("Invalid type") }
+    };
+    assert_eq!(data.to_gs1(), "(00) 106141412345678908");
 }

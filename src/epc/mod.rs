@@ -3,6 +3,7 @@ use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 
 pub mod sgtin;
+pub mod sscc;
 pub mod tid;
 mod util;
 
@@ -69,6 +70,7 @@ pub enum EPCValue<'a> {
     Unprogrammed(&'a Unprogrammed),
     SGTIN96(&'a sgtin::SGTIN96),
     SGTIN198(&'a sgtin::SGTIN198),
+    SSCC96(&'a sscc::SSCC96),
 }
 
 fn take_header(data: &[u8]) -> Result<(&[u8], EPCBinaryHeader)> {
@@ -82,6 +84,7 @@ pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>> {
     let epc = match header {
         EPCBinaryHeader::SGITN96 => sgtin::decode_sgtin96(data)?,
         EPCBinaryHeader::SGITN198 => sgtin::decode_sgtin198(data)?,
+        EPCBinaryHeader::SSCC96 => sscc::decode_sscc96(data)?,
         EPCBinaryHeader::Unprogrammed => 
             Box::new(Unprogrammed {
                 data: data.to_vec(),
