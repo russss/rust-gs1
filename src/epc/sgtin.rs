@@ -1,35 +1,12 @@
-use crate::{EPC, EPCValue, GS1, gs1::ApplicationIdentifier};
-use nom::IResult;
+use crate::epc::{EPC, EPCValue, GS1};
+use crate::general::ApplicationIdentifier;
+use crate::checksum::gs1_checksum;
+use crate::error::Result;
+use bitreader::BitReader;
 use pad::{Alignment, PadStr};
 
 fn zero_pad(input: String, digits: usize) -> String {
     input.pad(digits, '0', Alignment::Right, false)
-}
-
-fn int_digits(input: &String) -> Vec<u16> {
-    input.chars().map(|d| d.to_digit(10).unwrap() as u16).collect()
-}
-
-fn gs1_checksum(input: &String) -> u8 {
-    let digits = int_digits(input);
-    let mut even: u16 = 0;
-    let mut odd: u16 = 0;
-
-    for i in 1..digits.len() + 1 {
-        let curr = digits[digits.len() - i];
-        if i % 2 == 0 {
-            even += curr;
-        } else {
-            odd += curr;
-        }
-    }
-
-    let mut check = (3 * odd + even) % 10;
-    if check > 0 {
-        check = 10 - check;
-    }
-
-    check as u8
 }
 
 #[derive(PartialEq, Debug)]
@@ -108,64 +85,48 @@ fn sgtin_item_digits(partition: u8) -> usize {
     13 - sgtin_company_digits(partition)
 }
 
-pub(super) fn decode_sgtin96(data: &[u8]) -> IResult<&[u8], Box<dyn EPC>> {
-    // GS1 EPC TDS Table 14-2 and 14-3
-    let (data, (filter, (partition, company, item), serial)): (&[u8], (u8, (u8, u64, u64), u64)) = try_parse!(
-        data,
-        bits!(tuple!(
-            take_bits!(3usize),
-            switch!(take_bits!(3usize),
-                0 => tuple!(
-                    value!(0),
-                    take_bits!(40usize),
-                    take_bits!(4usize)
-                )
-                | 1 => tuple!(
-                    value!(1),
-                    take_bits!(37usize),
-                    take_bits!(7usize)
-                )
-                | 2 => tuple!(
-                    value!(2),
-                    take_bits!(34usize),
-                    take_bits!(10usize)
-                )
-                | 3 => tuple!(
-                    value!(3),
-                    take_bits!(30usize),
-                    take_bits!(14usize)
-                )
-                | 4 => tuple!(
-                    value!(4),
-                    take_bits!(27usize),
-                    take_bits!(17usize)
-                )
-                | 5 => tuple!(
-                    value!(5),
-                    take_bits!(24usize),
-                    take_bits!(20usize)
-                )
-                | 6 => tuple!(
-                    value!(6),
-                    take_bits!(20usize),
-                    take_bits!(24usize)
-                )
-            ),
-            take_bits!(38usize)
-        ))
-    );
+// GS1 EPC TDS Table 14-2
+fn partition_bits(partition: u8) -> Result<(u8, u8)> {
+    Ok(match partition {
+            0 => (40, 4),
+            1 => (37, 7),
+            2 => (34, 10),
+            3 => (30, 14),
+            4 => (27, 17),
+            5 => (24, 20),
+            6 => (20, 24),
+            _ => {
+                panic!(format!("Invalid partition value: {}", partition));
+                // TODO: error
+                //return Err("Invalid partition value");
+            }
+    })
+}
 
+fn extract_indicator(item: u64, partition: u8) -> Result<(u64, u8)> {
     // The first character of the correctly-padded item string is the indicator digit or must be
     // zero. I think.
     // This is not terribly well spelled out in the GS1 EPC spec.
     let item_str = zero_pad(item.to_string(), sgtin_item_digits(partition));
     let mut item_str_iterator = item_str.chars();
     let indicator = item_str_iterator.next().unwrap().to_digit(10).unwrap() as u8;
-    let item = item_str_iterator.collect::<String>().parse::<u64>().unwrap();
-    
-    Ok((
-        data,
-        Box::new(SGTIN96 {
+    let item = item_str_iterator.collect::<String>().parse::<u64>()?;
+    return Ok((item, indicator))
+}
+
+// GS1 EPC TDC Section 14.5.1
+pub(super) fn decode_sgtin96(data: &[u8]) -> Result<Box<dyn EPC>> {
+    let mut reader = BitReader::new(data);
+
+    let filter = reader.read_u8(3)?;
+    let partition = reader.read_u8(3)?;
+    let (company_bits, item_bits) = partition_bits(partition)?;
+    let company = reader.read_u64(company_bits)?;
+    let item = reader.read_u64(item_bits)?;
+    let (item, indicator) = extract_indicator(item, partition)?;
+    let serial = reader.read_u64(38)?;
+
+    Ok(Box::new(SGTIN96 {
             filter: filter,
             partition: partition,
             company: company,
@@ -173,13 +134,5 @@ pub(super) fn decode_sgtin96(data: &[u8]) -> IResult<&[u8], Box<dyn EPC>> {
             indicator: indicator,
             serial: serial,
         }),
-    ))
+    )
 }
-
-
-#[test]
-fn test_gs1_checksum() {
-    assert_eq!(0, gs1_checksum(&"0360843951968".to_string()));
-    assert_eq!(8, gs1_checksum(&"8061414112345".to_string()));
-}
-

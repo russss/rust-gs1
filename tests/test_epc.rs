@@ -1,4 +1,4 @@
-use epc::{decode_binary, EPCValue, GS1};
+use gs1::epc::{decode_binary, EPCValue, GS1};
 use hex;
 
 
