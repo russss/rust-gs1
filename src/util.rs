@@ -8,7 +8,7 @@ use std::cmp;
 
 // Read an EPC 7-bit ASCII string from the provided BitReader.
 // GS1 EPC TDS Section 14.4.2
-pub(super) fn read_string(mut reader: BitReader, bits: u64) -> Result<String> {
+pub(crate) fn read_string(mut reader: BitReader, bits: u64) -> Result<String> {
     let num_chars = cmp::min(reader.remaining(), bits) / 7;
     let mut chars: Vec<char> = Vec::new();
 
@@ -22,15 +22,15 @@ pub(super) fn read_string(mut reader: BitReader, bits: u64) -> Result<String> {
     Ok(chars.iter().collect())
 }
 
-pub(super) fn uri_encode(input: String) -> String {
+pub(crate) fn uri_encode(input: String) -> String {
     utf8_percent_encode(&input, NON_ALPHANUMERIC).to_string()
 }
 
-pub(super) fn zero_pad(input: String, digits: usize) -> String {
+pub(crate) fn zero_pad(input: String, digits: usize) -> String {
     input.pad(digits, '0', Alignment::Right, false)
 }
 
-pub(super) fn extract_indicator(item: u64, item_digits: usize) -> Result<(u64, u8)> {
+pub(crate) fn extract_indicator(item: u64, item_digits: usize) -> Result<(u64, u8)> {
     // The first character of the correctly-padded item string is the indicator digit or must be
     // zero. I think.
     // This is not terribly well spelled out in the GS1 EPC spec.

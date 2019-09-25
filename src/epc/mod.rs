@@ -10,7 +10,6 @@ use std::convert::TryFrom;
 pub mod sgtin;
 pub mod sscc;
 pub mod tid;
-mod util;
 
 
 // EPC Table 14-1

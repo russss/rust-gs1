@@ -21,21 +21,76 @@
 //! library is cross-referenced to these wherever possible.
 //!
 
-extern crate num_enum;
 extern crate bitreader;
+extern crate num_enum;
 extern crate pad;
 extern crate percent_encoding;
 
-pub mod epc;
-pub mod checksum;
-pub mod error;
-mod general;
+use num_enum::IntoPrimitive;
+use crate::checksum::gs1_checksum;
+use crate::util::zero_pad;
 
-/// A GS1 object which is capable of being represented as a GS1 code (i.e. a barcode).
+pub mod checksum;
+pub mod epc;
+pub mod error;
+
+mod util;
+
+
+// GS1 General Specifications, Figure 3.2-1
+#[repr(u16)]
+#[derive(Debug, IntoPrimitive)]
+pub(crate) enum ApplicationIdentifier {
+    SSCC = 0,
+    GTIN = 1,
+    GTINContent = 2,
+    Batch = 10,
+    ProductionDate = 11,
+    DueDate = 12,
+    PackagingDate = 13,
+    BestBeforeDate = 15,
+    SellByDate = 16,
+    ExpirationDate = 17,
+    InternalProductVariant = 20,
+    SerialNumber = 21
+}
+
+/// A GS1 object which is capable of being represented as a GS1 element string.
 pub trait GS1 {
-    /// Return the GS1 code string for this object.
+    /// Return the GS1 element string for this object.
     ///
     /// Example: `(01) 80614141123458 (21) 6789`
     fn to_gs1(&self) -> String;
 }
 
+/// Global Trade Item Number
+///
+/// GS1 General Specifications Section 3.3.2
+#[derive(PartialEq, Debug)]
+pub struct GTIN {
+    /// Company identifier
+    pub company: u64,
+    /// Number of digits in the decimal representation of the company identifier
+    pub company_digits: usize,
+    /// Item (product) identifier
+    pub item: u64,
+    /// Indicator digit in case of GTIN-14, otherwise zero
+    pub indicator: u8
+}
+
+impl GS1 for GTIN {
+    fn to_gs1(&self) -> String {
+        let element_string = format!(
+            "{}{}{}",
+            self.indicator,
+            zero_pad(self.company.to_string(), self.company_digits),
+            zero_pad(self.item.to_string(), 12 - self.company_digits)
+        );
+        format!(
+            "({:0>2}) {}{}",
+            ApplicationIdentifier::GTIN as u16,
+            element_string,
+            gs1_checksum(&element_string),
+        )
+    }
+}

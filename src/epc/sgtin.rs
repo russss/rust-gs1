@@ -1,25 +1,23 @@
 //! Serialised Global Trade Item Number
-use crate::checksum::gs1_checksum;
-use crate::epc::util::{extract_indicator, read_string, uri_encode, zero_pad};
+//!
+//! This is a combination of a GTIN and a serial number which allows an item to be uniquely
+//! identfied.
 use crate::epc::{EPCValue, EPC};
-use crate::GS1;
 use crate::error::Result;
-use crate::general::ApplicationIdentifier;
+use crate::util::{extract_indicator, read_string, uri_encode, zero_pad};
+use crate::{ApplicationIdentifier, GS1, GTIN};
 use bitreader::BitReader;
 
-/// 96-bit SGTIN
+/// 96-bit Serialised Global Trade Item Number
+/// 
+/// This comprises a GTIN, a filter value (which is used by RFID readers), and a numeric serial
+/// number.
 #[derive(PartialEq, Debug)]
 pub struct SGTIN96 {
     /// Filter value to allow RFID readers to select the type of tag to read.
     pub filter: u8,
-    /// Partition value: defines the size of the company and item fields
-    pub partition: u8,
-    /// Indicator digit
-    pub indicator: u8,
-    /// Company identifier
-    pub company: u64,
-    /// Item identifier (product code)
-    pub item: u64,
+    /// Global Trade Item Number
+    pub gtin: GTIN,
     /// Item serial number
     pub serial: u64,
 }
@@ -29,9 +27,9 @@ impl EPC for SGTIN96 {
     fn to_uri(&self) -> String {
         format!(
             "urn:epc:id:sgtin:{}.{}{}.{}",
-            zero_pad(self.company.to_string(), company_digits(self.partition)),
-            self.indicator.to_string(),
-            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
+            zero_pad(self.gtin.company.to_string(), self.gtin.company_digits),
+            self.gtin.indicator.to_string(),
+            zero_pad(self.gtin.item.to_string(), 12 - self.gtin.company_digits),
             self.serial
         )
     }
@@ -40,9 +38,9 @@ impl EPC for SGTIN96 {
         format!(
             "urn:epc:tag:sgtin-96:{}.{}.{}{}.{}",
             self.filter,
-            zero_pad(self.company.to_string(), company_digits(self.partition)),
-            self.indicator.to_string(),
-            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
+            zero_pad(self.gtin.company.to_string(), self.gtin.company_digits),
+            self.gtin.indicator.to_string(),
+            zero_pad(self.gtin.item.to_string(), 12 - self.gtin.company_digits),
             self.serial
         )
     }
@@ -54,32 +52,27 @@ impl EPC for SGTIN96 {
 
 impl GS1 for SGTIN96 {
     fn to_gs1(&self) -> String {
-        let element_string = format!(
-            "{}{}{}",
-            self.indicator,
-            zero_pad(self.company.to_string(), company_digits(self.partition)),
-            zero_pad(self.item.to_string(), item_digits(self.partition) - 1)
-        );
+        let gtin_gs1 = self.gtin.to_gs1();
         format!(
-            "({:0>2}) {}{} ({:0>2}) {}",
-            ApplicationIdentifier::GTIN as u16,
-            element_string,
-            gs1_checksum(&element_string),
+            "{} ({:0>2}) {}",
+            gtin_gs1,
             ApplicationIdentifier::SerialNumber as u16,
             self.serial
         )
     }
 }
 
-/// 198-bit SGTIN
+/// 198-bit Serialised Global Trade Item Number
+///
+/// This comprises a GTIN, a filter value (which is used by RFID readers), and an 
+/// alphanumeric serial number which is encoded using 7-bit ASCII.
 #[derive(PartialEq, Debug)]
 pub struct SGTIN198 {
-    /// Filter value defined by the manufacturer to allow RFID readers to select tags to read
+    /// Filter value to allow RFID readers to select tags to read
     pub filter: u8,
-    pub partition: u8,
-    pub indicator: u8,
-    pub company: u64,
-    pub item: u64,
+    /// Global Trade Item Number
+    pub gtin: GTIN,
+    /// Alphanumeric serial number
     pub serial: String,
 }
 
@@ -88,9 +81,9 @@ impl EPC for SGTIN198 {
     fn to_uri(&self) -> String {
         format!(
             "urn:epc:id:sgtin:{}.{}{}.{}",
-            zero_pad(self.company.to_string(), company_digits(self.partition)),
-            self.indicator,
-            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
+            zero_pad(self.gtin.company.to_string(), self.gtin.company_digits),
+            self.gtin.indicator,
+            zero_pad(self.gtin.item.to_string(), 12 - self.gtin.company_digits),
             uri_encode(self.serial.to_string())
         )
     }
@@ -99,9 +92,9 @@ impl EPC for SGTIN198 {
         format!(
             "urn:epc:tag:sgtin-198:{}.{}.{}{}.{}",
             self.filter,
-            zero_pad(self.company.to_string(), company_digits(self.partition)),
-            self.indicator,
-            zero_pad(self.item.to_string(), item_digits(self.partition) - 1),
+            zero_pad(self.gtin.company.to_string(), self.gtin.company_digits),
+            self.gtin.indicator,
+            zero_pad(self.gtin.item.to_string(), 12 - self.gtin.company_digits),
             uri_encode(self.serial.to_string())
         )
     }
@@ -113,17 +106,10 @@ impl EPC for SGTIN198 {
 
 impl GS1 for SGTIN198 {
     fn to_gs1(&self) -> String {
-        let element_string = format!(
-            "{}{}{}",
-            self.indicator,
-            zero_pad(self.company.to_string(), company_digits(self.partition)),
-            zero_pad(self.item.to_string(), item_digits(self.partition) - 1)
-        );
+        let gtin_gs1 = self.gtin.to_gs1();
         format!(
-            "({:0>2}) {}{} ({:0>2}) {}",
-            ApplicationIdentifier::GTIN as u16,
-            element_string,
-            gs1_checksum(&element_string),
+            "{} ({:0>2}) {}",
+            gtin_gs1,
             ApplicationIdentifier::SerialNumber as u16,
             self.serial
         )
@@ -173,10 +159,12 @@ pub(super) fn decode_sgtin96(data: &[u8]) -> Result<Box<dyn EPC>> {
 
     Ok(Box::new(SGTIN96 {
         filter: filter,
-        partition: partition,
-        company: company,
-        item: item,
-        indicator: indicator,
+        gtin: GTIN {
+            company: company,
+            company_digits: company_digits(partition),
+            item: item,
+            indicator: indicator,
+        },
         serial: serial,
     }))
 }
@@ -195,10 +183,12 @@ pub(super) fn decode_sgtin198(data: &[u8]) -> Result<Box<dyn EPC>> {
 
     Ok(Box::new(SGTIN198 {
         filter: filter,
-        partition: partition,
-        company: company,
-        item: item,
-        indicator: indicator,
+        gtin: GTIN {
+            company: company,
+            company_digits: company_digits(partition),
+            item: item,
+            indicator: indicator,
+        },
         serial: serial,
     }))
 }

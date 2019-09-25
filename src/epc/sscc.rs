@@ -1,10 +1,9 @@
 //! Serial Shipping Container Code
 use crate::checksum::gs1_checksum;
-use crate::epc::util::{extract_indicator, zero_pad};
+use crate::util::{extract_indicator, zero_pad};
 use crate::epc::{EPCValue, EPC};
-use crate::GS1;
+use crate::{GS1, ApplicationIdentifier};
 use crate::error::Result;
-use crate::general::ApplicationIdentifier;
 use bitreader::BitReader;
 
 #[derive(PartialEq, Debug)]

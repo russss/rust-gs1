@@ -14,8 +14,8 @@ fn test_decode() {
         _ => { panic!("Invalid type") }
     };
 
-    assert_eq!(val.company, 360843);
-    assert_eq!(val.item, 951968);
+    assert_eq!(val.gtin.company, 360843);
+    assert_eq!(val.gtin.item, 951968);
     assert_eq!(val.to_gs1(), "(01) 03608439519680 (21) 7025652");
 
     let data = [0, 176, 122, 20, 12, 95, 156, 81, 64, 0, 3, 238];
