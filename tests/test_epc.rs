@@ -32,6 +32,16 @@ fn test_decode() {
     };
 }
 
+#[test]
+fn test_bad_header() {
+    // Header byte 0xE2 is permanently reserved and should result in a parse failure
+    let data = [0xE2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    match decode_binary(&data) {
+        Err(_e) => assert!(true),
+        _ => assert!(false),
+    };
+}
+
 // Examples from GS1 EPC E.3
 #[test]
 fn test_examples() {

@@ -3,7 +3,7 @@
 //! EPCs are used to represent GS1 IDs on Gen2 RFID tags.
 //! This is documented in the [GS1 EPC Tag Data Standard](https://www.gs1.org/standards/epc-rfid/tds).
 //!
-use crate::error::Result;
+use crate::error::{Result, UnimplementedError};
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 
@@ -58,6 +58,7 @@ pub trait EPC {
     fn get_value(&self) -> EPCValue;
 }
 
+/// Represents an unprogrammed tag (with the header byte 0x00)
 #[derive(PartialEq, Debug)]
 pub struct Unprogrammed {
     pub data: Vec<u8>,
@@ -103,8 +104,8 @@ pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>> {
             Box::new(Unprogrammed {
                 data: data.to_vec(),
             }) as Box<dyn EPC>,
-        unimplemented => {
-            panic!("Unimplemented EPC type {:?}", unimplemented);
+        _unimplemented => {
+            return Err(Box::new(UnimplementedError()));
         }
     })
 }

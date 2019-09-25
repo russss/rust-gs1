@@ -3,7 +3,7 @@ use crate::checksum::gs1_checksum;
 use crate::util::{extract_indicator, zero_pad};
 use crate::epc::{EPCValue, EPC};
 use crate::{GS1, ApplicationIdentifier};
-use crate::error::Result;
+use crate::error::{Result, ParseError};
 use bitreader::BitReader;
 
 #[derive(PartialEq, Debug)]
@@ -80,9 +80,7 @@ fn partition_bits(partition: u8) -> Result<(u8, u8)> {
         5 => (24, 34),
         6 => (20, 48),
         _ => {
-            panic!(format!("Invalid partition value: {}", partition));
-            // TODO: error
-            //return Err("Invalid partition value");
+            return Err(Box::new(ParseError()));
         }
     })
 }

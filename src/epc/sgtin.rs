@@ -3,7 +3,7 @@
 //! This is a combination of a GTIN and a serial number which allows an item to be uniquely
 //! identfied.
 use crate::epc::{EPCValue, EPC};
-use crate::error::Result;
+use crate::error::{Result, ParseError};
 use crate::util::{extract_indicator, read_string, uri_encode, zero_pad};
 use crate::{ApplicationIdentifier, GS1, GTIN};
 use bitreader::BitReader;
@@ -138,9 +138,7 @@ fn partition_bits(partition: u8) -> Result<(u8, u8)> {
         5 => (24, 20),
         6 => (20, 24),
         _ => {
-            panic!(format!("Invalid partition value: {}", partition));
-            // TODO: error
-            //return Err("Invalid partition value");
+            return Err(Box::new(ParseError()));
         }
     })
 }
