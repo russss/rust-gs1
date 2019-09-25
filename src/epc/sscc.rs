@@ -6,8 +6,11 @@ use crate::{GS1, ApplicationIdentifier};
 use crate::error::{Result, ParseError};
 use bitreader::BitReader;
 
+
+/// 96-bit Serial Shipping Container Code
 #[derive(PartialEq, Debug)]
 pub struct SSCC96 {
+    /// Filter value to allow RFID readers to select the type of tag to read.
     pub filter: u8,
     pub partition: u8,
     pub indicator: u8,

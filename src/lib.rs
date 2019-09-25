@@ -65,6 +65,8 @@ pub trait GS1 {
 
 /// Global Trade Item Number
 ///
+/// This is the most-used GS1 identifier, and is a superset of UPC, EAN, and ISBN codes.
+///
 /// GS1 General Specifications Section 3.3.2
 #[derive(PartialEq, Debug)]
 pub struct GTIN {
