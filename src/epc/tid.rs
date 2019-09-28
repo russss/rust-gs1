@@ -22,7 +22,7 @@ pub struct TID {
     pub security: bool,
     /// Whether the Tag supports the FileOpen command
     pub file: bool,
-    /// Mask-designer identifier
+    /// Mask-designer (manufacturer) identifier
     pub mdid: u16,
     /// Tag-manufacturer-defined Tag Model Number
     pub tmid: u16,
@@ -107,7 +107,7 @@ pub fn mdid_name(mdid: &u16) -> &str {
         0b000000001 => "Impinj",
         0b000000010 => "Texas Instruments",
         0b000000011 => "Alien Technology",
-        0b000000100 => "Intelleflex ",
+        0b000000100 => "Intelleflex",
         0b000000101 => "Atmel",
         0b000000110 => "NXP Semiconductors",
         0b000000111 => "ST Microelectronics",
