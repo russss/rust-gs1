@@ -14,7 +14,7 @@ use crate::error::{ParseError, Result};
 use bitreader::BitReader;
 
 /// Tag Identification
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub struct TID {
     /// Whether the Tag implements Extended Tag Identification
     pub xtid: bool,
@@ -49,7 +49,7 @@ pub fn decode_tid(data: &[u8]) -> Result<TID> {
 }
 
 /// Extended Tag ID header
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Copy, Clone)]
 pub struct XTIDHeader {
     /// Whether a further XTID header is present - always false
     pub extended_header: bool,
