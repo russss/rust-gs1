@@ -103,6 +103,7 @@ pub fn decode_xtid_header(data: &[u8]) -> Result<XTIDHeader> {
 /// These mappings are from the [listing on the GS1
 /// website](https://www.gs1.org/epcglobal/standards/mdid).
 pub fn mdid_name(mdid: &u16) -> &str {
+    // These are all binary because that's how they are on the website, for some ridiculous reason.
     match mdid {
         0b000000001 => "Impinj",
         0b000000010 => "Texas Instruments",
@@ -165,5 +166,46 @@ pub fn mdid_name(mdid: &u16) -> &str {
         0b000111011 => "Suzhou HCTech Technology Co., Ltd.",
         0b000111100 => "AXEM Technology",
         _unknown => "Unknown",
+    }
+}
+
+
+/// Look up the model name of a tag given the MDID and TMID.
+///
+/// This data has been extracted from various datasheets - it's definitely not complete and it may
+/// not be correct.
+pub fn tmid_name(mdid: &u16, tmid: &u16) -> &'static str {
+    match (mdid, tmid) {
+        // Impinj
+        (0x1, 0x100) => "Monza 4D",
+        (0x1, 0x105) => "Monza 4QT",
+        (0x1, 0x10C) => "Monza 4E",
+        (0x1, 0x130) => "Monza 5",
+        (0x1, 0x160) => "Monza R6",
+        // Alien
+        (0x3, 0x412) => "Higgs-3",
+        (0x3, 0x414) => "Higgs-4",
+        // NXP
+        (0x6, 0x003) => "UCODE G2XM",
+        (0x6, 0x004) => "UCODE G2XL",
+        (0x6, 0x806) => "UCODE G2iL",
+        (0x6, 0x807) => "UCODE G2iL+",
+        (0x6, 0x80A) => "UCODE G2iM",
+        (0x6, 0x80D) => "UCODE i2c",
+        (0x6, 0x88D) => "UCODE i2c",
+        (0x6, 0x810) => "UCODE 7",
+        (0x6, 0x890) => "UCODE 7",
+        (0x6, 0x891) => "UCODE 7m",
+        (0x6, 0x894) => "UCODE 8",
+        (0x6, 0x906) => "UCODE G2iL",
+        (0x6, 0x907) => "UCODE G2iL+",
+        (0x6, 0x994) => "UCODE 8m",
+        (0x6, 0xB06) => "UCODE G2iL",
+        (0x6, 0xB07) => "UCODE G2iL+",
+        // RFMicron
+        (0x24, 0x401) => "Magnus S2",
+        (0x24, 0x402) => "Magnus S2",
+        (0x24, 0x403) => "Magnus S2",
+        _unknown => "Unknown"
     }
 }
