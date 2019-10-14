@@ -1,6 +1,6 @@
 //! The GS1 checksum algorithm
 
-fn int_digits(input: &String) -> Vec<u16> {
+fn int_digits(input: &str) -> Vec<u16> {
     input.chars().map(|d| d.to_digit(10).unwrap() as u16).collect()
 }
 
@@ -16,12 +16,12 @@ fn int_digits(input: &String) -> Vec<u16> {
 /// # Further Information
 /// GS1 General Specifications Section 7.9.1 - a description can also be found [on the GS1
 /// website](https://www.gs1.org/services/how-calculate-check-digit-manually).
-pub fn gs1_checksum(input: &String) -> u8 {
+pub fn gs1_checksum(input: &str) -> u8 {
     let digits = int_digits(input);
     let mut even: u16 = 0;
     let mut odd: u16 = 0;
 
-    for i in 1..digits.len() + 1 {
+    for i in 1..=digits.len() {
         let curr = digits[digits.len() - i];
         if i % 2 == 0 {
             even += curr;

@@ -156,14 +156,14 @@ pub(super) fn decode_sgtin96(data: &[u8]) -> Result<Box<dyn EPC>> {
     let serial = reader.read_u64(38)?;
 
     Ok(Box::new(SGTIN96 {
-        filter: filter,
+        filter,
         gtin: GTIN {
-            company: company,
+            company,
             company_digits: company_digits(partition),
-            item: item,
-            indicator: indicator,
+            item,
+            indicator,
         },
-        serial: serial,
+        serial,
     }))
 }
 
@@ -180,13 +180,13 @@ pub(super) fn decode_sgtin198(data: &[u8]) -> Result<Box<dyn EPC>> {
     let serial = read_string(reader, 140)?;
 
     Ok(Box::new(SGTIN198 {
-        filter: filter,
+        filter,
         gtin: GTIN {
-            company: company,
+            company,
             company_digits: company_digits(partition),
-            item: item,
-            indicator: indicator,
+            item,
+            indicator,
         },
-        serial: serial,
+        serial,
     }))
 }

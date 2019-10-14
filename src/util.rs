@@ -41,6 +41,6 @@ pub(crate) fn extract_indicator(item: u64, item_digits: usize) -> Result<(u64, u
     let mut item_str_iterator = item_str.chars();
     let indicator = item_str_iterator.next().unwrap().to_digit(10).unwrap() as u8;
     let item = item_str_iterator.collect::<String>().parse::<u64>()?;
-    return Ok((item, indicator));
+    Ok((item, indicator))
 }
 

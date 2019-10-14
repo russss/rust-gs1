@@ -66,11 +66,11 @@ pub struct Unprogrammed {
 
 impl EPC for Unprogrammed {
     fn to_uri(&self) -> String {
-        format!("urn:epc:id:unprogrammed")
+        "urn:epc:id:unprogrammed".to_string()
     }
 
     fn to_tag_uri(&self) -> String {
-        format!("urn:epc:tag:unprogrammed")
+        "urn:epc:tag:unprogrammed".to_string()
     }
 
     fn get_value(&self) -> EPCValue {

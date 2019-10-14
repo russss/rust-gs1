@@ -100,10 +100,10 @@ pub(super) fn decode_sscc96(data: &[u8]) -> Result<Box<dyn EPC>> {
     let (serial, indicator) = extract_indicator(serial, item_digits(partition))?;
 
     Ok(Box::new(SSCC96 {
-        filter: filter,
-        partition: partition,
-        indicator: indicator,
-        company: company,
-        serial: serial,
+        filter,
+        partition,
+        indicator,
+        company,
+        serial,
     }))
 }

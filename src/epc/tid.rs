@@ -83,17 +83,17 @@ pub fn decode_xtid_header(data: &[u8]) -> Result<XTIDHeader> {
     let user_memory_permalock = reader.read_bool()?;
     let blockwrite_blockerase = reader.read_bool()?;
     let optional_command_support = reader.read_bool()?;
-    let mut serial: u16 = reader.read_u8(3)? as u16;
+    let mut serial: u16 = reader.read_u16(3)?;
 
     if serial != 0 {
         serial = 48 + 16 * (serial - 1);
     }
 
     Ok(XTIDHeader {
-        extended_header: extended_header,
-        user_memory_permalock: user_memory_permalock,
-        blockwrite_blockerase: blockwrite_blockerase,
-        optional_command_support: optional_command_support,
+        extended_header,
+        user_memory_permalock,
+        blockwrite_blockerase,
+        optional_command_support,
         serial_size: serial,
     })
 }
@@ -105,6 +105,7 @@ pub fn decode_xtid_header(data: &[u8]) -> Result<XTIDHeader> {
 pub fn mdid_name(mdid: &u16) -> &str {
     // These are all binary because that's how they are on the website, for some ridiculous reason.
     match mdid {
+        #![allow(clippy::unreadable_literal)]
         0b000000001 => "Impinj",
         0b000000010 => "Texas Instruments",
         0b000000011 => "Alien Technology",
@@ -174,7 +175,7 @@ pub fn mdid_name(mdid: &u16) -> &str {
 ///
 /// This data has been extracted from various datasheets - it's definitely not complete and it may
 /// not be correct.
-pub fn tmid_name(mdid: &u16, tmid: &u16) -> &'static str {
+pub fn tmid_name(mdid: u16, tmid: u16) -> &'static str {
     match (mdid, tmid) {
         // Impinj
         (0x1, 0x100) => "Monza 4D",
