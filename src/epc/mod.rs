@@ -7,10 +7,10 @@ use crate::error::{Result, UnimplementedError};
 use num_enum::TryFromPrimitive;
 use std::convert::TryFrom;
 
+pub mod gid;
 pub mod sgtin;
 pub mod sscc;
 pub mod tid;
-
 
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
@@ -85,6 +85,7 @@ pub enum EPCValue<'a> {
     SGTIN96(&'a sgtin::SGTIN96),
     SGTIN198(&'a sgtin::SGTIN198),
     SSCC96(&'a sscc::SSCC96),
+    GID96(&'a gid::GID96),
 }
 
 fn take_header(data: &[u8]) -> Result<(&[u8], EPCBinaryHeader)> {
@@ -97,13 +98,13 @@ pub fn decode_binary(data: &[u8]) -> Result<Box<dyn EPC>> {
     let (data, header) = take_header(data)?;
 
     Ok(match header {
+        EPCBinaryHeader::GID96 => gid::decode_gid96(data)?,
         EPCBinaryHeader::SGITN96 => sgtin::decode_sgtin96(data)?,
         EPCBinaryHeader::SGITN198 => sgtin::decode_sgtin198(data)?,
         EPCBinaryHeader::SSCC96 => sscc::decode_sscc96(data)?,
-        EPCBinaryHeader::Unprogrammed => 
-            Box::new(Unprogrammed {
-                data: data.to_vec(),
-            }) as Box<dyn EPC>,
+        EPCBinaryHeader::Unprogrammed => Box::new(Unprogrammed {
+            data: data.to_vec(),
+        }) as Box<dyn EPC>,
         _unimplemented => {
             return Err(Box::new(UnimplementedError()));
         }
