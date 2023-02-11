@@ -40,6 +40,7 @@ mod util;
 // GS1 General Specifications, Figure 3.2-1
 #[repr(u16)]
 #[derive(Debug, IntoPrimitive)]
+#[allow(dead_code)]
 pub(crate) enum ApplicationIdentifier {
     SSCC = 0,
     GTIN = 1,
