@@ -43,4 +43,3 @@ pub(crate) fn extract_indicator(item: u64, item_digits: usize) -> Result<(u64, u
     let item = item_str_iterator.collect::<String>().parse::<u64>()?;
     Ok((item, indicator))
 }
-

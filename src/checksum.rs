@@ -1,7 +1,10 @@
 //! The GS1 checksum algorithm
 
 fn int_digits(input: &str) -> Vec<u16> {
-    input.chars().map(|d| d.to_digit(10).unwrap() as u16).collect()
+    input
+        .chars()
+        .map(|d| d.to_digit(10).unwrap() as u16)
+        .collect()
 }
 
 /// Calculate a GS1 checksum digit.

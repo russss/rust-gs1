@@ -1,15 +1,15 @@
 //! Serialised Global Trade Item Number
 //!
 //! This is a combination of a GTIN and a serial number which allows an item to be uniquely
-//! identfied.
+//! identified.
 use crate::epc::{EPCValue, EPC};
-use crate::error::{Result, ParseError};
+use crate::error::{ParseError, Result};
 use crate::util::{extract_indicator, read_string, uri_encode, zero_pad};
 use crate::{ApplicationIdentifier, GS1, GTIN};
 use bitreader::BitReader;
 
 /// 96-bit Serialised Global Trade Item Number
-/// 
+///
 /// This comprises a GTIN, a filter value (which is used by RFID readers), and a numeric serial
 /// number.
 #[derive(PartialEq, Debug)]
@@ -28,7 +28,7 @@ impl EPC for SGTIN96 {
         format!(
             "urn:epc:id:sgtin:{}.{}{}.{}",
             zero_pad(self.gtin.company.to_string(), self.gtin.company_digits),
-            self.gtin.indicator.to_string(),
+            self.gtin.indicator,
             zero_pad(self.gtin.item.to_string(), 12 - self.gtin.company_digits),
             self.serial
         )
@@ -39,7 +39,7 @@ impl EPC for SGTIN96 {
             "urn:epc:tag:sgtin-96:{}.{}.{}{}.{}",
             self.filter,
             zero_pad(self.gtin.company.to_string(), self.gtin.company_digits),
-            self.gtin.indicator.to_string(),
+            self.gtin.indicator,
             zero_pad(self.gtin.item.to_string(), 12 - self.gtin.company_digits),
             self.serial
         )
@@ -64,7 +64,7 @@ impl GS1 for SGTIN96 {
 
 /// 198-bit Serialised Global Trade Item Number
 ///
-/// This comprises a GTIN, a filter value (which is used by RFID readers), and an 
+/// This comprises a GTIN, a filter value (which is used by RFID readers), and an
 /// alphanumeric serial number which is encoded using 7-bit ASCII.
 #[derive(PartialEq, Debug)]
 pub struct SGTIN198 {

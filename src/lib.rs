@@ -26,9 +26,9 @@ extern crate num_enum;
 extern crate pad;
 extern crate percent_encoding;
 
-use num_enum::IntoPrimitive;
 use crate::checksum::gs1_checksum;
 use crate::util::zero_pad;
+use num_enum::IntoPrimitive;
 
 pub mod checksum;
 pub mod epc;
@@ -36,11 +36,10 @@ pub mod error;
 
 mod util;
 
-
 // GS1 General Specifications, Figure 3.2-1
 #[repr(u16)]
 #[derive(Debug, IntoPrimitive)]
-#[allow(dead_code)]
+#[allow(dead_code, clippy::upper_case_acronyms)]
 pub(crate) enum ApplicationIdentifier {
     SSCC = 0,
     GTIN = 1,
@@ -53,7 +52,7 @@ pub(crate) enum ApplicationIdentifier {
     SellByDate = 16,
     ExpirationDate = 17,
     InternalProductVariant = 20,
-    SerialNumber = 21
+    SerialNumber = 21,
 }
 
 /// A GS1 object which is capable of being represented as a GS1 element string.
@@ -78,7 +77,7 @@ pub struct GTIN {
     /// Item (product) identifier
     pub item: u64,
     /// Indicator digit in case of GTIN-14, otherwise zero
-    pub indicator: u8
+    pub indicator: u8,
 }
 
 impl GS1 for GTIN {

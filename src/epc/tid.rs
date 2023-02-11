@@ -170,7 +170,6 @@ pub fn mdid_name(mdid: &u16) -> &str {
     }
 }
 
-
 /// Look up the model name of a tag given the MDID and TMID.
 ///
 /// This data has been extracted from various datasheets - it's definitely not complete and it may
@@ -207,6 +206,6 @@ pub fn tmid_name(mdid: u16, tmid: u16) -> &'static str {
         (0x24, 0x401) => "Magnus S2",
         (0x24, 0x402) => "Magnus S2",
         (0x24, 0x403) => "Magnus S2",
-        _unknown => "Unknown"
+        _unknown => "Unknown",
     }
 }

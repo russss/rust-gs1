@@ -15,6 +15,7 @@ pub mod tid;
 // EPC Table 14-1
 #[derive(Debug, Eq, PartialEq, TryFromPrimitive, Copy, Clone)]
 #[repr(u8)]
+#[allow(clippy::upper_case_acronyms)]
 enum EPCBinaryHeader {
     Unprogrammed = 0x00,
     GTDI96 = 0x2C,
