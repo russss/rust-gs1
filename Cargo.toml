@@ -7,7 +7,7 @@ homepage = "https://github.com/russss/rust-gs1"
 repository = "https://github.com/russss/rust-gs1"
 readme = "README.md"
 authors = ["Russ Garrett <russ@garrett.co.uk>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 num_enum = "0.4.1"
