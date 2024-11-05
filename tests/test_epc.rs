@@ -121,4 +121,12 @@ fn test_examples() {
     let data = decode_binary(&hex::decode("3500E86F8000A9E000000586").unwrap()).unwrap();
     assert_eq!(data.to_uri(), "urn:epc:id:gid:952056.2718.1414");
     assert_eq!(data.to_tag_uri(), "urn:epc:tag:gid-96:952056.2718.1414");
+
+    // GRAI-96
+    let data = decode_binary(&hex::decode("3376451FD40C0E400000162E").unwrap()).unwrap();
+    assert_eq!(data.to_uri(), "urn:epc:id:grai:9521141.12345.5678");
+    assert_eq!(
+        data.to_tag_uri(),
+        "urn:epc:tag:grai-96:3.9521141.12345.5678"
+    );
 }
