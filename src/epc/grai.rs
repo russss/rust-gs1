@@ -1,8 +1,8 @@
 //! Global Returnable Asset Identifier
 //!
-//! This is a combination of manager number assigned by GS1, an object class
-//! assigned by that mananger, and a serial number which allows an item to
-//! be uniquely identfied.
+//! This is a combination of a company prefix assigned by GS1, an asset type
+//! assigned by that company, and a serial number which allows an item to
+//! be uniquely identified.
 use crate::epc::{EPCValue, EPC};
 use crate::error::Result;
 use bitreader::BitReader;
