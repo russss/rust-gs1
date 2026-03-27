@@ -1,3 +1,7 @@
+> [!IMPORTANT]
+> This repository has been migrated to Codeberg at [https://codeberg.org/russss/rust-gs1](https://codeberg.org/russss/rust-gs1)
+
+
 # gs1
 
 Library for dealing with GS1 identifiers
